@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dosadora v4</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icone-512.png">
+<meta name="theme-color" content="#0f172a">
+<style>
+/* SPLASH SCREEN */
+
+#splash {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    transition: opacity 0.4s ease;
+}
+
+#splash.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#splash img {
+    width: min(90vw, 700px);
+    height: auto;
+    object-fit: contain;
+}
+body{
+    font-family:Arial,sans-serif;
+    background:#000;
+    color:#fff;
+    margin:0;
+    padding:20px;
+}
+h1{text-align:center}
+.card{
+    background:linear-gradient(
+        90deg,
+        rgba(16,16,16,0.96) 0%,
+        rgba(28,28,28,0.96) 50%,
+        rgba(16,16,16,0.96) 100%
+    );
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 8px 30px rgba(0,0,0,0.35);
+}
+label{display:block;margin-top:10px}
+input[type=range]{
+    appearance:none;
+    width:100%;
+    background:transparent;
+}
+
+input[type=range]::-webkit-slider-runnable-track{
+    height:8px;
+    background:#2a2a2a;
+    border-radius:999px;
+}
+
+input[type=range]::-webkit-slider-thumb{
+    appearance:none;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:#f1f1f1;
+    border:none;
+    margin-top:-6px;
+    box-shadow:
+        0 0 10px rgba(255,255,255,.10),
+        0 2px 6px rgba(0,0,0,.35);
+}
+.value{color:#d1d5db;font-weight:bold}
+button{width:100%;padding:12px;border:none;border-radius:12px;margin-top:12px;font-size:16px}
+.npk,
+.k{
+    background:linear-gradient(
+        180deg,
+        rgba(42,42,42,.96) 0%,
+        rgba(22,22,22,.96) 100%
+    );
+    color:#f5f5f5;
+    border:1px solid rgba(255,255,255,.08);
+    cursor:pointer;
+    font-weight:600;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 6px 16px rgba(0,0,0,.35);
+    transition:all .15s ease;
+}
+
+.npk:hover,
+.k:hover{
+    filter:brightness(1.06);
+    border-color:rgba(255,255,255,.14);
+}
+.npk:active,.k:active{transform:scale(.98)}
+.npk.sending,.k.sending{opacity:.65;cursor:wait}
+.switchline{margin-top:12px}
+
+.small{font-size:12px;color:#cbd5e1}
+
+.top-header{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    align-items:center;
+    margin:10px 0 30px 0;
+}
+
+.header-left{text-align:left;}
+.header-center{text-align:center;}
+.header-right{text-align:right;}
+
+.status{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:18px;
+    color:white;
+}
+
+.status::before{
+    content:"";
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#00ff33;
+    display:inline-block;
+}
+
+.pump-logo{
+    width:140px;
+    height:auto;
+}
+
+.logo-neoaqua{
+    width:180px;
+    height:auto;
+}
+
+
+.top-cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+    margin:20px 0 28px 0;
+}
+.mini-card{
+    background:linear-gradient(90deg,rgba(16,16,16,.96),rgba(28,28,28,.96),rgba(16,16,16,.96));
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:20px;
+    padding:18px;
+}
+.mini-title{
+    font-size:16px;
+    margin-bottom:14px;
+    font-weight:bold;
+}
+.mini-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 12px;
+    margin:8px 0;
+    background:rgba(255,255,255,.025);
+    border-radius:12px;
+}
+
+
+.cards-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:24px;
+}
+.card-modern .topline{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:20px;
+}
+.config-btn{
+ background:rgba(255,255,255,.08);
+ color:#fff;
+ border:1px solid rgba(255,255,255,.08);
+ border-radius:12px;
+ padding:10px 16px;
+ width:auto;
+}
+.metrics{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:18px;
+ margin:18px 0;
+}
+.metric-label{
+ color:#a3a3a3;
+ font-size:12px;
+ text-transform:uppercase;
+}
+.metric-value{
+ font-size:18px;
+ margin-top:6px;
+}
+
+.hidden-config{
+    display:none;
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+.hidden-config.open{
+    display:block;
+}
+
+@media(max-width:900px){
+ .cards-grid{grid-template-columns:1fr;}
+ .metrics{grid-template-columns:1fr;}
+}
+
+
+.bottom-nav{
+ position:sticky;
+ bottom:0;
+ margin-top:28px;
+ background:linear-gradient(90deg,rgba(16,16,16,.96),rgba(28,28,28,.96),rgba(16,16,16,.96));
+ border:1px solid rgba(255,255,255,.06);
+ border-radius:20px;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ padding:18px 10px;
+ text-align:center;
+}
+.bottom-nav .active{
+ color:#fff;
+ font-weight:bold;
+}
+.bottom-nav span{
+ color:#b8c0cc;
+ font-size:18px;
+}
+
+
+.status{
+    padding:12px 22px;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+    width:max-content;
+}
+
+
+.time-preview{
+ margin-top:10px;
+ font-size:18px;
+ font-weight:bold;
+ color:#fff;
+ text-align:center;
+ padding:10px;
+ background:rgba(255,255,255,.04);
+ border-radius:10px;
+}
+
+.switchline{
+ display:flex;
+ align-items:center;
+ margin-top:12px;
+}
+
+
+.slider-row{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-top:12px;
+}
+
+.slider-row label{
+ margin:0;
+}
+
+.slider-value{
+ color:#fff;
+ font-weight:bold;
+ font-size:14px;
+}
+
+.hidden-config label{
+    color:#a3a3a3;
+    font-size:12px;
+    text-transform:uppercase;
+    margin-top:12px;
+}
+
+</style>
+</head>
+<body>
+<div id="splash">
+    <img src="icone-512.png" alt="Neoaqua Dosing Pump">
+</div>
+
+<div class="top-header">
+
+    <div class="header-left">
+        <div class="status">ONLINE</div>
+    </div>
+
+    <div class="header-center">
+        <img src="header_pump.png" class="pump-logo" alt="Dosadora">
+    </div>
+
+    <div class="header-right">
+        <img src="neoaqua_pump.png" class="logo-neoaqua" alt="Neoaqua">
+    </div>
+
+
+</div>
+
+<div class="top-cards">
+  <div class="mini-card">
+    
+<div class="mini-title">
+<svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:10px">
+  <rect x="3" y="5" width="18" height="16" rx="2"
+        fill="none" stroke="currentColor" stroke-width="1.8"/>
+  <line x1="3" y1="9" x2="21" y2="9"
+        stroke="currentColor" stroke-width="1.8"/>
+  <line x1="8" y1="3" x2="8" y2="7"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="3" x2="16" y2="7"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
+PRÓXIMAS DOSAGENS
+</div>
+
+    <div class="mini-row"><span>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+NPK+Ca</span><span>09:00</span></div>
+    <div class="mini-row"><span>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+Potássio</span><span>12:30</span></div>
+  </div>
+
+  <div class="mini-card">
+    
+<div class="mini-title">
+<svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:10px">
+  <path d="M12 3
+           C12 3 7 9 7 13
+           A5 5 0 0 0 17 13
+           C17 9 12 3 12 3Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
+DOSADO HOJE
+</div>
+
+    <div class="mini-row"><span>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+NPK+Ca</span><span>14.4 mL</span></div>
+    <div class="mini-row"><span>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+Potássio</span><span>1.0 mL</span></div>
+  </div>
+
+  <div class="mini-card">
+    
+<div class="mini-title">
+<svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:10px">
+  <rect x="3" y="4" width="18" height="16" rx="2"
+        fill="none" stroke="currentColor" stroke-width="1.6"/>
+  <polyline points="6,14 10,10 13,12 18,7"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
+STATUS DO SISTEMA
+</div>
+
+    <div class="mini-row"><span>Hora atual</span><span id="horaAtual">--:--</span></div>
+    <div class="mini-row"><span>Wi‑Fi</span><span id="wifiAtual">--</span></div>
+  </div>
+</div>
+
+
+<div class="cards-grid">
+
+<div class="card card-modern">
+<div class="topline">
+<h2>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+NPK+Ca</h2>
+<button type="button" class="config-btn">⚙ Configurações</button>
+</div>
+
+<div class="metrics">
+<div><div class="metric-label">Dose</div><div class="metric-value"><span id="npkDoseVal" class="value">--</span> mL</div></div>
+<div><div class="metric-label">Vazão</div><div class="metric-value"><span id="npkVazaoVal" class="value">--</span> mL/s</div></div>
+<div><div class="metric-label">Velocidade</div><div class="metric-value"><span id="npkVelVal" class="value">--</span> %</div></div>
+</div>
+
+<input id="npkDose" type="range" min="0.1" max="20" step="0.1">
+
+<div class="hidden-config">
+<div class="slider-row"><label>Vazão</label><span class="slider-value"><span id="npkVazaoCfgVal">--</span> mL/s</span></div>
+<input id="npkVazao" type="range" min="0.01" max="2" step="0.01">
+<div class="slider-row"><label>Velocidade</label><span class="slider-value"><span id="npkVelCfgVal">--</span> %</span></div><input id="npkVel" type="range" min="10" max="100" step="1">
+<div class="slider-row"><label>Hora</label><span class="slider-value" id="npkHoraCfgVal">--</span></div><input id="npkHora" type="range" min="0" max="23" step="1">
+<div class="slider-row"><label>Minuto</label><span class="slider-value" id="npkMinCfgVal">--</span></div><input id="npkMin" type="range" min="0" max="59" step="1">
+<div class="switchline">
+<input type="checkbox" id="npkAg">
+<label for="npkAg" style="display:inline;color:#fff;font-size:14px;margin-left:8px;text-transform:none;">Agendamento ativo</label>
+</div>
+<div class="time-preview">
+<span id="npkHoraVal">--</span>:<span id="npkMinVal">--</span>
+</div>
+</div>
+
+<button type="button" id="dosarNpkBtn" class="npk">
+<svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align:-4px;margin-right:10px">
+<path d="M8 6L18 12L8 18Z"
+fill="currentColor"/>
+</svg>
+DOSAR
+</button>
+</div>
+
+<div class="card card-modern">
+<div class="topline">
+
+<h2>
+<svg width="26" height="26" viewBox="0 -2 24 28" style="vertical-align:-4px;margin-right:8px">
+    <path
+        d="M9 3V8L5 15
+           A4 4 0 0 0 9 21H15
+           A4 4 0 0 0 19 15L15 8V3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+    <line x1="9" y1="8"
+          x2="15" y2="8"
+          stroke="currentColor"
+          stroke-width="1.8"/>
+</svg>
+Potássio
+</h2>
+
+<button type="button" class="config-btn">⚙ Configurações</button>
+</div>
+
+<div class="metrics">
+<div><div class="metric-label">Dose</div><div class="metric-value"><span id="kDoseVal" class="value">--</span> mL</div></div>
+<div><div class="metric-label">Vazão</div><div class="metric-value"><span id="kVazaoVal" class="value">--</span> mL/s</div></div>
+<div><div class="metric-label">Velocidade</div><div class="metric-value"><span id="kVelVal" class="value">--</span> %</div></div>
+</div>
+
+<input id="kDose" type="range" min="0.1" max="20" step="0.1">
+
+<div class="hidden-config">
+<div class="slider-row"><label>Vazão</label><span class="slider-value"><span id="kVazaoCfgVal">--</span> mL/s</span></div>
+<input id="kVazao" type="range" min="0.01" max="2" step="0.01">
+<div class="slider-row"><label>Velocidade</label><span class="slider-value"><span id="kVelCfgVal">--</span> %</span></div><input id="kVel" type="range" min="10" max="100" step="1">
+<div class="slider-row"><label>Hora</label><span class="slider-value" id="kHoraCfgVal">--</span></div><input id="kHora" type="range" min="0" max="23" step="1">
+<div class="slider-row"><label>Minuto</label><span class="slider-value" id="kMinCfgVal">--</span></div><input id="kMin" type="range" min="0" max="59" step="1">
+<div class="switchline">
+<input type="checkbox" id="kAg">
+<label for="kAg" style="display:inline;color:#fff;font-size:14px;margin-left:8px;text-transform:none;">Agendamento ativo</label>
+</div>
+<div class="time-preview">
+<span id="kHoraVal">--</span>:<span id="kMinVal">--</span>
+</div>
+</div>
+
+<button type="button" id="dosarKBtn" class="k">
+<svg width="22" height="22" viewBox="0 0 24 24" style="vertical-align:-4px;margin-right:10px">
+<path d="M8 6L18 12L8 18Z"
+fill="currentColor"/>
+</svg>
+DOSAR
+</button>
+</div>
+
+</div>
+
+<div class="small" id="debug">Conectando...</div>
+<div class="small">ESP32: <span id="statusDosagem">aguardando</span></div>
+
+<script>
+const host = "http://192.168.0.31";
+
+function post(url){
+ return new Promise((resolve)=>{
+   const frameName="esp32PostTarget";
+   let frame=document.querySelector('iframe[name="'+frameName+'"]');
+
+   if(!frame){
+     frame=document.createElement("iframe");
+     frame.name=frameName;
+     frame.style.display="none";
+     document.body.appendChild(frame);
+   }
+
+   const form=document.createElement("form");
+   form.method="POST";
+   form.action=host+url;
+   form.target=frameName;
+   form.style.display="none";
+   document.body.appendChild(form);
+   form.submit();
+
+   setTimeout(()=>{
+     form.remove();
+     resolve();
+   },300);
+ });
+}
+
+function format2(v){
+  return String(parseInt(v,10)).padStart(2,'0');
+}
+
+function bind(id,label,url){
+ document.getElementById(id).addEventListener("change",(e)=>{
+   const val=e.target.value;
+
+   if(label.toLowerCase().includes("hora") || label.toLowerCase().includes("min")){
+      document.getElementById(label).textContent=format2(val);
+   }else{
+      document.getElementById(label).textContent=val;
+   }
+
+   post(url+val);
+ });
+}
+
+bind("npkDose","npkDoseVal","/number/NPK%2BCa%20-%20Dose/set?value=");
+bind("npkVazao","npkVazaoVal","/number/NPK%2BCa%20-%20Vazao/set?value=");
+bind("npkVel","npkVelVal","/number/NPK%2BCa%20-%20Velocidade/set?value=");
+bind("npkHora","npkHoraVal","/number/NPK%2BCa%20-%20Hora/set?value=");
+bind("npkMin","npkMinVal","/number/NPK%2BCa%20-%20Minuto/set?value=");
+
+bind("kDose","kDoseVal","/number/Potassio%20-%20Dose/set?value=");
+bind("kVazao","kVazaoVal","/number/Potassio%20-%20Vazao/set?value=");
+bind("kVel","kVelVal","/number/Potassio%20-%20Velocidade/set?value=");
+bind("kHora","kHoraVal","/number/Potassio%20-%20Hora/set?value=");
+bind("kMin","kMinVal","/number/Potassio%20-%20Minuto/set?value=");
+
+async function dosar(nome,botao,mensagem){
+ const debug=document.getElementById("debug");
+ botao.classList.add("sending");
+ debug.innerText="Enviando "+mensagem+"...";
+
+ try{
+   const entidade=encodeURIComponent(nome);
+   await post("/button/"+entidade+"/press");
+   debug.innerText="Comando "+mensagem+" enviado; aguardando confirmação";
+ }catch(e){
+   debug.innerText="Não foi possível acessar "+host;
+ }finally{
+   setTimeout(()=>botao.classList.remove("sending"),500);
+ }
+}
+
+const map={
+"number-npk_ca_-_dose":["npkDose","npkDoseVal"],
+"number-npk_ca_-_vazao":["npkVazao","npkVazaoVal"],
+"number-npk_ca_-_velocidade":["npkVel","npkVelVal"],
+"number-npk_ca_-_hora":["npkHora","npkHoraVal"],
+"number-npk_ca_-_minuto":["npkMin","npkMinVal"],
+"number-potassio_-_dose":["kDose","kDoseVal"],
+"number-potassio_-_vazao":["kVazao","kVazaoVal"],
+"number-potassio_-_velocidade":["kVel","kVelVal"],
+"number-potassio_-_hora":["kHora","kHoraVal"],
+"number-potassio_-_minuto":["kMin","kMinVal"]
+};
+
+const es=new EventSource(host+"/events");
+
+es.addEventListener("open",()=>{
+ document.getElementById("debug").innerText="Conectado ao ESP32";
+});
+
+es.addEventListener("state",(ev)=>{
+ try{
+   const d=JSON.parse(ev.data);
+
+   if(map[d.id]){
+      document.getElementById(map[d.id][0]).value=d.value;
+
+      const lbl=map[d.id][1];
+      if(lbl.toLowerCase().includes("hora") || lbl.toLowerCase().includes("min")){
+         document.getElementById(lbl).textContent=format2(d.value);
+      }else{
+         document.getElementById(lbl).textContent=d.value;
+      }
+   }
+ }catch(err){
+   document.getElementById("debug").innerText=err;
+ }
+});
+
+// Atualização dos sensores do sistema
+es.addEventListener("state",(ev)=>{
+ try{
+   const d=JSON.parse(ev.data);
+
+   if(d.id && d.id.includes("hora_atual")){
+      const el=document.getElementById("horaAtual");
+      if(el) el.textContent=d.value;
+   }
+
+   if(d.id && d.id.includes("wifi_ssid")){
+      const el=document.getElementById("wifiAtual");
+      if(el) el.textContent=d.value;
+   }
+
+   if(d.id && d.id.includes("status_dosagem")){
+      const el=document.getElementById("statusDosagem");
+      if(el) el.textContent=d.value;
+      document.getElementById("debug").innerText=d.value;
+   }
+
+ }catch(e){}
+});
+
+
+// Splash screen
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash');
+
+        splash.classList.add('hidden');
+
+        setTimeout(() => {
+            splash.remove();
+        }, 400);
+
+    }, 1500);
+});
+
+document.querySelectorAll('.config-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+        const panel = btn.closest('.card').querySelector('.hidden-config');
+        if(panel){
+            panel.classList.toggle('open');
+        }
+    });
+});
+
+document.getElementById("dosarNpkBtn").addEventListener("click",function(){
+    dosar("NPK+Ca - Dosar agora",this,"NPK+Ca");
+});
+
+document.getElementById("dosarKBtn").addEventListener("click",function(){
+    dosar("Potassio - Dosar agora",this,"Potássio");
+});
+
+
+function syncCfgValues(){
+ const pairs=[
+ ['npkVazaoVal','npkVazaoCfgVal'],
+ ['npkVelVal','npkVelCfgVal'],
+ ['npkHoraVal','npkHoraCfgVal'],
+ ['npkMinVal','npkMinCfgVal'],
+ ['kVazaoVal','kVazaoCfgVal'],
+ ['kVelVal','kVelCfgVal'],
+ ['kHoraVal','kHoraCfgVal'],
+ ['kMinVal','kMinCfgVal']
+ ];
+ pairs.forEach(p=>{
+   const a=document.getElementById(p[0]);
+   const b=document.getElementById(p[1]);
+   if(a && b) b.textContent=a.textContent;
+ });
+}
+setInterval(syncCfgValues,500);
+
+</script>
+
+
+<div class="bottom-nav">
+  <span class="active">
+<svg width="28" height="28" viewBox="0 0 24 24" style="vertical-align:-7px;margin-right:8px">
+  <path d="M4 11.5L12 4L20 11.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  <path d="M7 10.5V20H17V10.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
+INÍCIO</span>
+  <span>
+<svg width="28" height="28" viewBox="0 0 24 24" style="vertical-align:-7px;margin-right:8px">
+  <circle cx="12" cy="12" r="7.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"/>
+  <path d="M12 7V12L15.5 12"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
+HISTÓRICO</span>
+  <span>
+<svg width="28" height="28" viewBox="0 0 24 24" style="vertical-align:-7px;margin-right:8px">
+  <circle cx="12" cy="12" r="3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"/>
+  <path d="M12 4.5V7M12 17V19.5M4.5 12H7M17 12H19.5M6.7 6.7L8.4 8.4M15.6 15.6L17.3 17.3M17.3 6.7L15.6 8.4M8.4 15.6L6.7 17.3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"/>
+</svg>
+CONFIGURAÇÕES</span>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+
+</html>
